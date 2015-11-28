@@ -9,10 +9,5 @@ class TestApp(npyscreen.NPSApp):
         t = F.add(npyscreen.TitleText, name = "Text:",)
         fn = F.add(npyscreen.TitleFilename, name = "Filename:")
         fn2 = F.add(npyscreen.TitleDateCombo, name = "Date:")
-        s = F.add(npyscreen.TitleSlider, out_of=12, name = "Slider")
-        
-        F.edit()
-
-if __name__ == "__main__":
-    App = TestApp()
-    App.run()
+        s = F.add(npyscreen.TitleSlide, out_of=12, name = "Slider")
+       ml = F.add(npyscreen.Multi)
