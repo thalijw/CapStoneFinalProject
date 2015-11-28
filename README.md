@@ -1,2 +1,2 @@
 # CapStoneFinalProject
-This is the development branch for Final project for CS419 
+This is the databse_code branch for Final project for CS419 
