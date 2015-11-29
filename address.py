@@ -1,33 +1,44 @@
 import sqlite3
 import npyscreen
+import psycopg2
 
-class AddressDatabase(object):
-    def __init__(self, filename="example-addressbook.db"):
-        self.dbfilename = filename
-        db = sqlite3.connect(self.dbfilename)
-        c = db.cursor()
-        c.execute(
-        "CREATE TABLE IF NOT EXISTS records\
-            ( record_internal_id INTEGER PRIMARY KEY, \
-              last_name     TEXT, \
-              other_names   TEXT, \
-              email_address TEXT \
-              )" \
-            )
-        db.commit()
+class PostgreSQL(object):
+    def __init__(self, databaseIn="postgres", userIn="wisam", passwordIn="wisam"):
+        con = None
+        self.dbname = databaseIn
+        self.user = userIn
+        self.password = passwordIn
+        try:
+            self.con = psycopg2.connect(dbname=self.dbname, user=self.user, host='localhost', password=self.password)
+            self.con.set_isolation_level(psycopg2.ISOLATION_LEVEL_AUTOCOMMIT)
+        except:
+            print "I am unable to connect to the database"
+        c = self.con.cursor()
+        # c.execute("select * from pg_database where datname = %(dname)s", {'dname': self.dbname })
+        createQuery = "CREATE TABLE IF NOT EXISTS weather ( ID SERIAL PRIMARY KEY, city varchar(80), temp int, prcp real, date date);"
+        c.execute(createQuery)
+        isSeeded = ""
+        try:
+            isSeeded = c.fetchall()
+        except:
+            pass
+        if len(isSeeded) <= 0:
+            addQuery = "INSERT INTO weather (city,temp,prcp,date) VALUES ('San Fransisco', 30, 0.10, '2005-10-09')"
+            c.execute(addQuery)
+            self.con.commit()
         c.close()
 
-    def add_record(self, last_name = '', other_names='', email_address=''):
-        db = sqlite3.connect(self.dbfilename)
-        c = db.cursor()
-        c.execute('INSERT INTO records(last_name, other_names, email_address) \
-                    VALUES(?,?,?)', (last_name, other_names, email_address))
+    def add_record(self, cityIn='', tempIn='', prcpIn='', dateIn=''):
+        # db = connect(self.dbfilename)
+        c = self.con.cursor()
+        addQuery = "INSERT INTO weather (city,temp,prcp,date) VALUES (?,?,?,?)"
+        c.execute(addQuery, (cityIn, tempIn, prcpIn, dateIn))
         db.commit()
         c.close()
 
     def update_record(self, record_id, last_name = '', other_names='', email_address=''):
-        db = sqlite3.connect(self.dbfilename)
-        c = db.cursor()
+        # db = sqlite3.connect(self.dbfilename)
+        c = self.con.cursor()
         c.execute('UPDATE records set last_name=?, other_names=?, email_address=? \
                     WHERE record_internal_id=?', (last_name, other_names, email_address, \
                                                         record_id))
@@ -35,24 +46,24 @@ class AddressDatabase(object):
         c.close()
 
     def delete_record(self, record_id):
-        db = sqlite3.connect(self.dbfilename)
-        c = db.cursor()
-        c.execute('DELETE FROM records where record_internal_id=?', (record_id,))
-        db.commit()
+        # db = sqlite3.connect(self.dbfilename)
+        c = self.con.cursor()
+        c.execute('DELETE FROM weather WHERE id=%s', (record_id,))
+        self.con.commit()
         c.close()
 
     def list_all_records(self, ):
-        db = sqlite3.connect(self.dbfilename)
-        c = db.cursor()
-        c.execute('SELECT * from records')
+        # db = sqlite3.connect(self.dbfilename)
+        c = self.con.cursor()
+        c.execute('SELECT * from weather')
         records = c.fetchall()
         c.close()
         return records
 
     def get_record(self, record_id):
-        db = sqlite3.connect(self.dbfilename)
-        c = db.cursor()
-        c.execute('SELECT * from records WHERE record_internal_id=?', (record_id,))
+        # db = sqlite3.connect(self.dbfilename)
+        c = self.con.cursor()
+        c.execute('SELECT * from weather WHERE id=15')
         records = c.fetchall()
         c.close()
         return records[0]
@@ -66,7 +77,7 @@ class RecordList(npyscreen.MultiLineAction):
         })
 
     def display_value(self, vl):
-        return "%s, %s" % (vl[1], vl[2])
+        return "%s, %s, %s" % (vl[0], vl[1], vl[2])
 
     def actionHighlighted(self, act_on_this, keypress):
         self.parent.parentApp.getForm('EDITRECORDFM').value =act_on_this[0]
@@ -130,7 +141,7 @@ class EditRecord(npyscreen.ActionForm):
 
 class AddressBookApplication(npyscreen.NPSAppManaged):
     def onStart(self):
-        self.myDatabase = AddressDatabase()
+        self.myDatabase = PostgreSQL()
         self.addForm("MAIN", RecordListDisplay)
         self.addForm("EDITRECORDFM", EditRecord)
 
