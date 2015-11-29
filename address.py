@@ -1,4 +1,5 @@
 import sqlite3
+import npyscreen
 
 class AddressDatabase(object):
     def __init__(self, filename="example-addressbook.db"):
