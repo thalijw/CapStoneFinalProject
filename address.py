@@ -22,27 +22,25 @@ class PostgreSQL(object):
             isSeeded = c.fetchall()
         except:
             pass
-        if len(isSeeded) <= 0:
+        if len(isSeeded) == 0:
             addQuery = "INSERT INTO weather (city,temp,prcp,date) VALUES ('San Fransisco', 30, 0.10, '2005-10-09')"
             c.execute(addQuery)
             self.con.commit()
         c.close()
 
-    def add_record(self, cityIn='', tempIn='', prcpIn='', dateIn=''):
+    def add_record(self, city='', temp='', prcp='', date=''):
         # db = connect(self.dbfilename)
         c = self.con.cursor()
-        addQuery = "INSERT INTO weather (city,temp,prcp,date) VALUES (?,?,?,?)"
-        c.execute(addQuery, (cityIn, tempIn, prcpIn, dateIn))
-        db.commit()
+        c.execute('INSERT INTO weather (city,temp,prcp,date) VALUES (%s,%s,%s,%s)', (city, temp, prcp, date,))
+        self.con.commit()
         c.close()
 
-    def update_record(self, record_id, last_name = '', other_names='', email_address=''):
+    def update_record(self, record_id, city='', temp='', prcp='', date=''):
         # db = sqlite3.connect(self.dbfilename)
         c = self.con.cursor()
-        c.execute('UPDATE records set last_name=?, other_names=?, email_address=? \
-                    WHERE record_internal_id=?', (last_name, other_names, email_address, \
-                                                        record_id))
-        db.commit()
+        c.execute('UPDATE records SET city=%s, temp=%s, prcp=%s, date=%s \
+                    WHERE id=%s', (city, temp, prcp, date, record_id,))
+        self.con.commit()
         c.close()
 
     def delete_record(self, record_id):
@@ -63,7 +61,7 @@ class PostgreSQL(object):
     def get_record(self, record_id):
         # db = sqlite3.connect(self.dbfilename)
         c = self.con.cursor()
-        c.execute('SELECT * from weather WHERE id=15')
+        c.execute('SELECT * from weather WHERE id=%s', (record_id,))
         records = c.fetchall()
         c.close()
         return records[0]
@@ -77,7 +75,7 @@ class RecordList(npyscreen.MultiLineAction):
         })
 
     def display_value(self, vl):
-        return "%s, %s, %s" % (vl[0], vl[1], vl[2])
+        return "%s, %s, %s, %s" % (vl[0], vl[1], vl[2], vl[3])
 
     def actionHighlighted(self, act_on_this, keypress):
         self.parent.parentApp.getForm('EDITRECORDFM').value =act_on_this[0]
@@ -103,36 +101,42 @@ class RecordListDisplay(npyscreen.FormMutt):
 class EditRecord(npyscreen.ActionForm):
     def create(self):
         self.value = None
-        self.wgLastName   = self.add(npyscreen.TitleText, name = "Last Name:",)
-        self.wgOtherNames = self.add(npyscreen.TitleText, name = "Other Names:")
-        self.wgEmail      = self.add(npyscreen.TitleText, name = "Email:")
+        self.wgCity    = self.add(npyscreen.TitleText, name = "City:",)
+        self.wgTemp    = self.add(npyscreen.TitleText, name = "Temperature:")
+        self.wgPrcp    = self.add(npyscreen.TitleText, name = "Precipitation:")
+        self.wgDate    = self.add(npyscreen.TitleText, name = "Date:")
 
     def beforeEditing(self):
         if self.value:
             record = self.parentApp.myDatabase.get_record(self.value)
             self.name = "Record id : %s" % record[0]
             self.record_id          = record[0]
-            self.wgLastName.value   = record[1]
-            self.wgOtherNames.value = record[2]
-            self.wgEmail.value      = record[3]
+            self.wgCity.value       = record[1]
+            self.wgTemp.value       = record[2]
+            self.wgPrcp.value       = record[3]
+            self.wgDate.value       = record[4]
         else:
             self.name = "New Record"
             self.record_id          = ''
-            self.wgLastName.value   = ''
-            self.wgOtherNames.value = ''
-            self.wgEmail.value      = ''
+            self.wgCity.value       = ''
+            self.wgTemp.value       = ''
+            self.wgPrcp.value       = ''
+            self.wgDate.value       = ''
 
     def on_ok(self):
         if self.record_id: # We are editing an existing record
             self.parentApp.myDatabase.update_record(self.record_id,
-                                            last_name=self.wgLastName.value,
-                                            other_names = self.wgOtherNames.value,
-                                            email_address = self.wgEmail.value,
+                                            city = self.wgCity.value,
+                                            temp = self.wgTemp.value,
+                                            prcp = self.wgPrcp.value,
+                                            date = self.wgDate.value,
                                             )
         else: # We are adding a new record.
-            self.parentApp.myDatabase.add_record(last_name=self.wgLastName.value,
-            other_names = self.wgOtherNames.value,
-            email_address = self.wgEmail.value,
+            self.parentApp.myDatabase.add_record(
+            city = self.wgCity.value,
+            temp = self.wgTemp.value,
+            prcp = self.wgPrcp.value,
+            date = self.wgDate.value,
             )
         self.parentApp.switchFormPrevious()
 
