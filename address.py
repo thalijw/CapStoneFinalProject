@@ -14,32 +14,25 @@ class PostgreSQL(object):
         except:
             print "I am unable to connect to the database"
         c = self.con.cursor()
+        dropQuery = "DROP TABLE weather;"
+        c.execute(dropQuery)
         # c.execute("select * from pg_database where datname = %(dname)s", {'dname': self.dbname })
-        createQuery = "CREATE TABLE IF NOT EXISTS weather ( ID SERIAL PRIMARY KEY, city varchar(80), temp int, prcp real, date date);"
+        createQuery = "CREATE TABLE IF NOT EXISTS weather ( ID SERIAL PRIMARY KEY, city varchar(80), temp int, prcp real, day date);"
         c.execute(createQuery)
-        isSeeded = ""
-        try:
-            isSeeded = c.fetchall()
-        except:
-            pass
-        if len(isSeeded) == 0:
-            addQuery = "INSERT INTO weather (city,temp,prcp,date) VALUES ('San Fransisco', 30, 0.10, '2005-10-09')"
-            c.execute(addQuery)
-            self.con.commit()
         c.close()
 
-    def add_record(self, city='', temp='', prcp='', date=''):
+    def add_record(self, city='', temp='', prcp='', day=''):
         # db = connect(self.dbfilename)
         c = self.con.cursor()
-        c.execute('INSERT INTO weather (city,temp,prcp,date) VALUES (%s,%s,%s,%s)', (city, temp, prcp, date,))
+        c.execute('INSERT INTO weather (city,temp,prcp,day) VALUES (%s,%s,%s,%s)', (city, temp, prcp, day,))
         self.con.commit()
         c.close()
 
-    def update_record(self, record_id, city='', temp='', prcp='', date=''):
+    def update_record(self, record_id, city='', temp='', prcp='', day=''):
         # db = sqlite3.connect(self.dbfilename)
         c = self.con.cursor()
-        c.execute('UPDATE records SET city=%s, temp=%s, prcp=%s, date=%s \
-                    WHERE id=%s', (city, temp, prcp, date, record_id,))
+        c.execute('UPDATE weather SET city=%s, temp=%s, prcp=%s, day=%s \
+                    WHERE id=%s', (city, temp, prcp, day, record_id,))
         self.con.commit()
         c.close()
 
@@ -104,7 +97,7 @@ class EditRecord(npyscreen.ActionForm):
         self.wgCity    = self.add(npyscreen.TitleText, name = "City:",)
         self.wgTemp    = self.add(npyscreen.TitleText, name = "Temperature:")
         self.wgPrcp    = self.add(npyscreen.TitleText, name = "Precipitation:")
-        self.wgDate    = self.add(npyscreen.TitleText, name = "Date:")
+        self.wgDay    = self.add(npyscreen.DateCombo, name = "Date:")
 
     def beforeEditing(self):
         if self.value:
@@ -112,31 +105,31 @@ class EditRecord(npyscreen.ActionForm):
             self.name = "Record id : %s" % record[0]
             self.record_id          = record[0]
             self.wgCity.value       = record[1]
-            self.wgTemp.value       = record[2]
-            self.wgPrcp.value       = record[3]
-            self.wgDate.value       = record[4]
+            self.wgTemp.value       = str(record[2])
+            self.wgPrcp.value       = str(record[3])
+            self.wgDay.value       = record[4]
         else:
             self.name = "New Record"
             self.record_id          = ''
             self.wgCity.value       = ''
             self.wgTemp.value       = ''
             self.wgPrcp.value       = ''
-            self.wgDate.value       = ''
+            self.wgDay.value       = ''
 
     def on_ok(self):
         if self.record_id: # We are editing an existing record
             self.parentApp.myDatabase.update_record(self.record_id,
                                             city = self.wgCity.value,
-                                            temp = self.wgTemp.value,
-                                            prcp = self.wgPrcp.value,
-                                            date = self.wgDate.value,
+                                            temp = str(self.wgTemp.value),
+                                            prcp = str(self.wgPrcp.value),
+                                            day = self.wgDay.value,
                                             )
         else: # We are adding a new record.
             self.parentApp.myDatabase.add_record(
             city = self.wgCity.value,
             temp = self.wgTemp.value,
             prcp = self.wgPrcp.value,
-            date = self.wgDate.value,
+            day = self.wgDay.value,
             )
         self.parentApp.switchFormPrevious()
 
