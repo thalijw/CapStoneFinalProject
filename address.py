@@ -14,9 +14,6 @@ class PostgreSQL(object):
         except:
             print "I am unable to connect to the database"
         c = self.con.cursor()
-        # dropQuery = "DROP TABLE weather;"
-        c.execute(dropQuery)
-        # c.execute("select * from pg_database where datname = %(dname)s", {'dname': self.dbname })
         createQuery = "CREATE TABLE IF NOT EXISTS weather ( ID SERIAL PRIMARY KEY, city varchar(80), temp int, prcp real, day date);"
         c.execute(createQuery)
         c.close()
