@@ -18,14 +18,12 @@ class PostgreSQL(object):
         c.close()
 
     def add_record(self, city='', temp='', prcp='', day=''):
-        # db = connect(self.dbfilename)
         c = self.con.cursor()
         c.execute('INSERT INTO weather (city,temp,prcp,day) VALUES (%s,%s,%s,%s)', (city, temp, prcp, day,))
         self.con.commit()
         c.close()
 
     def update_record(self, record_id, city='', temp='', prcp='', day=''):
-        # db = sqlite3.connect(self.dbfilename)
         c = self.con.cursor()
         c.execute('UPDATE weather SET city=%s, temp=%s, prcp=%s, day=%s \
                     WHERE id=%s', (city, temp, prcp, day, record_id,))
@@ -33,14 +31,12 @@ class PostgreSQL(object):
         c.close()
 
     def delete_record(self, record_id):
-        # db = sqlite3.connect(self.dbfilename)
         c = self.con.cursor()
         c.execute('DELETE FROM weather WHERE id=%s', (record_id,))
         self.con.commit()
         c.close()
 
     def list_all_records(self, ):
-        # db = sqlite3.connect(self.dbfilename)
         c = self.con.cursor()
         c.execute('SELECT * from weather')
         records = c.fetchall()
@@ -48,7 +44,6 @@ class PostgreSQL(object):
         return records
 
     def get_record(self, record_id):
-        # db = sqlite3.connect(self.dbfilename)
         c = self.con.cursor()
         c.execute('SELECT * from weather WHERE id=%s', (record_id,))
         records = c.fetchall()
